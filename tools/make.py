@@ -30,7 +30,7 @@
 
 ###############################################################################
 
-__version__ = "0.8"
+__version__ = "0.9"
 
 import sys
 
@@ -52,13 +52,14 @@ import time
 import timeit
 import re
 import fileinput
+import datetime
 
 if sys.platform == "win32":
     import winreg
 
 ######## GLOBALS #########
 project = "@zeusops_mod"
-project_version = "3.0.0"
+project_version = "1.14.0"
 arma3tools_path = ""
 work_drive = ""
 module_root = ""
@@ -227,6 +228,17 @@ def find_bi_tools(work_drive):
     else:
         raise Exception("BadTools","Arma 3 Tools are not installed correctly or the P: drive needs to be created.")
 
+def mikero_windows_registry(path, access=winreg.KEY_READ):
+    try:
+        return winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Mikero\{}".format(path), access=access)
+    except FileNotFoundError:
+        try:
+            return winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"Software\Mikero\{}".format(path), access=access)
+        except FileNotFoundError:
+            try:
+                return winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Wow6432Node\Mikero\{}".format(path), access=access)
+            except FileNotFoundError:
+                return winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"Software\Wow6432Node\Mikero\{}".format(path), access=access)
 
 def find_depbo_tools():
     """Use registry entries to find DePBO-based tools."""
@@ -235,12 +247,8 @@ def find_depbo_tools():
 
     for tool in requiredToolPaths:
         try:
-            try:
-                k = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Mikero\{}".format(tool))
-                path = winreg.QueryValueEx(k, "exe")[0]
-            except FileNotFoundError:
-                k = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"Software\Mikero\{}".format(tool))
-                path = winreg.QueryValueEx(k, "exe")[0]
+            k = mikero_windows_registry(tool)
+            path = winreg.QueryValueEx(k, "exe")[0]
         except FileNotFoundError:
             print_error("Could not find {}".format(tool))
             failed = True
@@ -255,6 +263,19 @@ def find_depbo_tools():
         raise Exception("BadDePBO", "DePBO tools not installed correctly")
 
     return requiredToolPaths
+
+def pboproject_settings():
+    """Use registry entries to configure needed pboproject settings."""
+    value_exclude = "thumbs.db,*.txt,*.h,*.dep,*.cpp,*.bak,*.png,*.log,*.pew,source,*.tga"
+
+    try:
+        k = mikero_windows_registry(r"pboProject\Settings", access=winreg.KEY_SET_VALUE)
+        winreg.SetValueEx(k, "m_exclude", 0, winreg.REG_SZ, value_exclude)
+        winreg.SetValueEx(k, "m_exclude2", 0, winreg.REG_SZ, value_exclude)
+        winreg.SetValueEx(k, "wildcard_exclude_from_pbo_normal", 0, winreg.REG_SZ, value_exclude)
+        winreg.SetValueEx(k, "wildcard_exclude_from_pbo_unbinarised_missions", 0, winreg.REG_SZ, value_exclude)
+    except:
+        raise Exception("BadDePBO", "pboProject not installed correctly, make sure to run it at least once")
 
 
 def color(color):
@@ -284,8 +305,10 @@ def color(color):
 
 def print_error(msg):
     color("red")
-    print ("ERROR: {}".format(msg))
+    print("ERROR: {}".format(msg))
     color("reset")
+    global printedErrors
+    printedErrors += 1
 
 def print_green(msg):
     color("green")
@@ -315,8 +338,13 @@ def copy_important_files(source_dir,destination_dir):
         for file in importantFiles:
             filePath = os.path.join(module_root_parent, file)
             if os.path.exists(filePath):
-                print_green("Copying file => {}".format(filePath))
-                shutil.copy(os.path.join(source_dir,filePath), destination_dir)
+                if os.path.isdir(filePath):
+                    print_green("Copying directory => {}".format(filePath))
+                    shutil.rmtree(os.path.join(destination_dir, file), True)
+                    shutil.copytree(os.path.join(source_dir, filePath), os.path.join(destination_dir, file))
+                else:
+                    print_green("Copying file => {}".format(filePath))
+                    shutil.copy(os.path.join(source_dir,filePath), destination_dir)
             else:
                 missingFiles.append("{}".format(filePath))
                 print_error("Failed copying file => {}".format(filePath))
@@ -346,7 +374,7 @@ def copy_important_files(source_dir,destination_dir):
 
 
 def copy_optionals_for_building(mod,pbos):
-    src_directories = os.listdir(optionals_root)
+    src_directories = next(os.walk(optionals_root))[1]
     current_dir = os.getcwd()
 
     print_blue("\nChecking optionals folder...")
@@ -419,10 +447,17 @@ def cleanup_optionals(mod):
                 src_sig_path = os.path.join(release_dir, project, "addons", sigFile_name)
                 dst_sig_path = os.path.join(release_dir, project, "optionals", sigFile_name)
 
+
                 if (os.path.isfile(src_file_path)):
+                    if (os.path.isfile(dst_file_path)):
+                        # print("Cleanuping up old file {}".format(dst_file_path))
+                        os.remove(dst_file_path);
                     #print("Preserving {}".format(file_name))
                     os.renames(src_file_path,dst_file_path)
                 if (os.path.isfile(src_sig_path)):
+                    if (os.path.isfile(dst_sig_path)):
+                        # print("Cleanuping up old file {}".format(dst_sig_path))
+                        os.remove(dst_sig_path);
                     #print("Preserving {}".format(sigFile_name))
                     os.renames(src_sig_path,dst_sig_path)
             except FileExistsError:
@@ -516,7 +551,7 @@ def get_project_version(version_increments=[]):
                 majorText = re.search(r"#define MAJOR (.*\b)", hpptext).group(1)
                 minorText = re.search(r"#define MINOR (.*\b)", hpptext).group(1)
                 patchText = re.search(r"#define PATCHLVL (.*\b)", hpptext).group(1)
-                buildText = re.search(r"#define BUILD (.*\b)", hpptext).group(1)
+                buildTextOld = re.search(r"#define BUILD (.*\b)", hpptext).group(1)
 
                 # Increment version (reset all below except build)
                 if version_increments != []:
@@ -530,10 +565,10 @@ def get_project_version(version_increments=[]):
                     elif "patch" in version_increments:
                         patchText = int(patchText) + 1
 
-                    # Always increment build
-                    if "build" in version_increments:
-                        buildText = int(buildText) + 1
+                # Always update build to current date
+                buildText = datetime.datetime.today().strftime("%y%m%d")
 
+                if version_increments != [] or buildTextOld != buildText:
                     print_green("Incrementing version to {}.{}.{}.{}".format(majorText,minorText,patchText,buildText))
                     with open(scriptModPath, "w", newline="\n") as file:
                         file.writelines([
@@ -784,6 +819,10 @@ def main(argv):
     global pbo_name_prefix
     global ciBuild
     global missingFiles
+    global failedBuilds
+    global printedErrors
+
+    printedErrors = 0
 
     if sys.platform != "win32":
         print_error("Non-Windows platform (Cygwin?). Please re-run from cmd.")
@@ -804,6 +843,7 @@ def main(argv):
     make_target = "DEFAULT" # Which section in make.cfg to use for the build
     new_key = True # Make a new key and use it to sign?
     quiet = False # Suppress output from build tool?
+    sqfc_compiling = True
 
     # Parse arguments
     if "help" in argv or "-h" in argv or "--help" in argv:
@@ -879,9 +919,6 @@ See the make.cfg file for additional build options.
         version_update = False
 
     version_increments = []
-    if "increment_build" in argv:
-        argv.remove("increment_build")
-        version_increments.append("build")
     if "increment_patch" in argv:
         argv.remove("increment_patch")
         version_increments.append("patch")
@@ -1004,6 +1041,8 @@ See the make.cfg file for additional build options.
             pboproject = depbo_tools["pboProject"]
             rapifyTool = depbo_tools["rapify"]
             makepboTool = depbo_tools["MakePbo"]
+
+            pboproject_settings()
         except:
             raise
             print_error("Could not find dePBO tools. Download the needed tools from: https://dev.withsix.com/projects/mikero-pbodll/files")
@@ -1142,6 +1181,24 @@ See the make.cfg file for additional build options.
                         print_error("\nFailed to delete {}".format(os.path.join(obsolete_check_path,file)))
                         pass
 
+        # Always cleanup old sqfc
+        for root, _dirs, files in os.walk(module_root_parent):
+            for file in files:
+                if file.endswith(".sqfc"):
+                    os.remove(os.path.join(root, file))
+        if sqfc_compiling:
+            print_blue("\nCompiling to sqfc...")
+            compiler_exe = os.path.join(module_root_parent, "ArmaScriptCompiler.exe")
+            if not os.path.isfile(compiler_exe):
+                print_yellow("ArmaScriptCompiler.exe not found in base mod folder - skipping")
+            else:
+                ret = subprocess.call([compiler_exe], cwd=module_root_parent, stdout=False)
+                if ret == 0:
+                    print_green("ArmaScriptCompiler return code == {}".format(str(ret)))
+                else:
+                    print_error("ArmaScriptCompiler return code == {}".format(str(ret)))
+                    raise # probably means something bad happened and we should stop
+
         # For each module, prep files and then build.
         print_blue("\nBuilding...")
         for module in modules:
@@ -1190,7 +1247,7 @@ See the make.cfg file for additional build options.
 
                 except:
                     raise
-                    print_error("ERROR: Could not copy module to work drive. Does the module exist?")
+                    print_error("Could not copy module to work drive. Does the module exist?")
                     input("Press Enter to continue...")
                     print("Resuming build...")
                     continue
@@ -1211,7 +1268,7 @@ See the make.cfg file for additional build options.
                         os.remove(f)
             except:
                 raise
-                print_error("ERROR: Could not copy module to work drive. Does the module exist?")
+                print_error("Could not copy module to work drive. Does the module exist?")
                 input("Press Enter to continue...")
                 print("Resuming build...")
                 continue
@@ -1241,7 +1298,7 @@ See the make.cfg file for additional build options.
                         cmd = [makepboTool, "-P","-A","-X=*.backup", os.path.join(work_drive, prefix, module),os.path.join(module_root, release_dir, project,"addons")]
 
                     else:
-                        cmd = [pboproject, "-P", os.path.join(work_drive, prefix, module), "+Engine=Arma3", "-S","+Noisy", "+Clean", "+Mod="+os.path.join(module_root, release_dir, project), "-Key"]
+                        cmd = [pboproject, "-P", os.path.join(work_drive, prefix, module), "+Engine=Arma3", "-S", "+Noisy", "+Clean", "-Warnings", "+Mod="+os.path.join(module_root, release_dir, project), "-Key"]
 
                     color("grey")
                     if quiet:
@@ -1393,9 +1450,17 @@ See the make.cfg file for additional build options.
         except:
             print_error("ERROR: Could not delete pboProject temp files.")
 
+    if sqfc_compiling:
+        print_blue("\nCleaning up sqfc...")
+        # cleanup all old sqfc
+        for root, _dirs, files in os.walk(module_root_parent):
+            for file in files:
+                if file.endswith(".sqfc"):
+                    os.remove(os.path.join(root, file))
+
     # Make release
     if make_release_zip:
-        release_name = "{}_{}".format(zipPrefix, project_version.rsplit(".", 1)[0])
+        release_name = "{}_v{}".format(project.lstrip("@"), project_version.rsplit(".", 1)[0])
 
         try:
             # Delete all log files
@@ -1448,23 +1513,22 @@ See the make.cfg file for additional build options.
             except:
                 print_error("Could not copy files. Is Arma 3 running?")
 
-    if len(failedBuilds) > 0 or len(missingFiles) > 0:
+    tracedErrors = len(failedBuilds) + len(missingFiles)
+    if printedErrors > 0: # printedErrors includes tracedErrors
+        printedOnlyErrors = printedErrors - tracedErrors
+        print()
+        print_error("Failed with {} errors.".format(printedErrors))
         if len(failedBuilds) > 0:
-            print()
-            print_error("Build failed! {} PBOs failed!".format(len(failedBuilds)))
             for failedBuild in failedBuilds:
-                print("- {} failed.".format(failedBuild))
-
+                print("- {} build failed!".format(failedBuild))
         if len(missingFiles) > 0:
-            missingFiles = set(missingFiles)
-            print()
-            print_error("Missing files! {} files not found!".format(len(missingFiles)))
             for missingFile in missingFiles:
-                print("- {} failed.".format(missingFile))
-
-        sys.exit(1)
+                print("- {} not found!".format(missingFile))
+        if printedOnlyErrors > 0:
+            print_yellow("- {} untraced error(s)!".format(printedOnlyErrors))
     else:
         print_green("\nCompleted with 0 errors.")
+
 
 if __name__ == "__main__":
     start_time = timeit.default_timer()
@@ -1473,6 +1537,9 @@ if __name__ == "__main__":
     print("\nTotal Program time elapsed: {0:2}h {1:2}m {2:4.5f}s".format(h,m,s))
 
     if ciBuild:
-        sys.exit(0)
+        if len(failedBuilds) > 0:
+            sys.exit(1)
+        else:
+            sys.exit(0)
 
     input("Press Enter to continue...")
