@@ -9,7 +9,7 @@ on:
 jobs:
   draft:
     runs-on: ubuntu-latest
-    if: github.repository == 'zeusops/zeusopsmod'
+    if: github.repository == 'Gehock/zeusopsmod'
     steps:
     - name: Release Drafter
       uses: release-drafter/release-drafter@v5
