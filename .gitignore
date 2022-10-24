@@ -1,1 +1,8 @@
-source/@zeusops/addons/zeusops_addon.pbo
+release/*
+*.cache
+*.pbo
+texHeaders.bin
+*.swp
+*.swo
+*.biprivatekey
+Thumbs.db

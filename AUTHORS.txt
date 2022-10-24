@@ -1,0 +1,8 @@
+﻿# CONTRIBUTOR LIST
+
+# CORE TEAM
+
+Ties van Kipshagen ("Dyzalonius")
+Sami Laine ("Gehock")
+
+# CONTRIBUTORS

@@ -1,0 +1,12 @@
+name = "Zeusops Mod";
+picture = "logo_zeusops_mod_ca.paa";
+actionName = "Website";
+action = "https://www.zeusops.com/";
+description = "Zeusops Mod";
+logo = "logo_zeusops_mod_ca.paa";
+logoOver = "logo_zeusops_mod_ca.paa";
+tooltip = "Zeusops Mod";
+tooltipOwned = "Zeusops Mod";
+overview = "Zeusops Mod";
+author = "Zeusops";
+overviewPicture = "logo_zeusops_mod_ca.paa";
