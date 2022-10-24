@@ -3,8 +3,7 @@ name: pboProject
 on:
   push:
     branches:
-    - master
-    - feature/ace-build
+    - none
   pull_request_target:
 
 jobs:
