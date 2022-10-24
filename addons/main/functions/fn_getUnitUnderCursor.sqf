@@ -1,6 +1,6 @@
 /*
-	@file_name: fn_getUnitUnderCursor.sqf
-	@file_author: Dyzalonius
+    @file_name: fn_getUnitUnderCursor.sqf
+    @file_author: Dyzalonius
 */
 
 params ["_logic"];

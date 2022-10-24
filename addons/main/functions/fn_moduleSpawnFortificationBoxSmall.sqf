@@ -1,6 +1,6 @@
 /*
-	@file_name: fn_moduleSpawnFortificationBoxSmall.sqf
-	@file_author: Dyzalonius
+    @file_name: fn_moduleSpawnFortificationBoxSmall.sqf
+    @file_author: Dyzalonius
 */
 
 _logic = _this param [0,objNull];
@@ -15,24 +15,24 @@ _object = _logic call zeusops_fnc_getUnitUnderCursor;
 
 // Spawn small fortification box
 if (isNull _object) then {
-	// Spawn fortification box
-	_object = createVehicle ["CargoNet_01_box_f", _pos, [], 0, "CAN_COLLIDE"];
-	_object setDir (round random 360);
+    // Spawn fortification box
+    _object = createVehicle ["CargoNet_01_box_f", _pos, [], 0, "CAN_COLLIDE"];
+    _object setDir (round random 360);
 
-	// Allow zeuses to move the fortification box
-	[(getAssignedCuratorLogic player),[[_object],true]] remoteExec ["addCuratorEditableObjects", allCurators, true];
+    // Allow zeuses to move the fortification box
+    [(getAssignedCuratorLogic player),[[_object],true]] remoteExec ["addCuratorEditableObjects", allCurators, true];
 
-	[2, _object] spawn ZO_fnc_fortificationBox;
-	"Spawned small fortification box" call zeusops_fnc_showCuratorMessage;
+    [2, _object] spawn ZO_fnc_fortificationBox;
+    "Spawned small fortification box" call zeusops_fnc_showCuratorMessage;
 } else {
-	// Make existing object a fortification box
-	[2, _object] spawn ZO_fnc_fortificationBox;
-	"Made object a small fortification box" call zeusops_fnc_showCuratorMessage;
+    // Make existing object a fortification box
+    [2, _object] spawn ZO_fnc_fortificationBox;
+    "Made object a small fortification box" call zeusops_fnc_showCuratorMessage;
 };
 
 // Delete module
 if (count objectcurators _logic > 0) then {
-	deletevehicle _logic;
+    deletevehicle _logic;
 };
 
 true;

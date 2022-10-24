@@ -1,6 +1,6 @@
 /*
-	@file_name: fn_respawnPlayer.sqf
-	@file_author: Dyzalonius
+    @file_name: fn_respawnPlayer.sqf
+    @file_author: Dyzalonius
 */
 
 // respawn

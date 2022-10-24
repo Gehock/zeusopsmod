@@ -1,6 +1,6 @@
 /*
-	@file_name: fn_moduleForceRespawnWave.sqf
-	@file_author: Dyzalonius
+    @file_name: fn_moduleForceRespawnWave.sqf
+    @file_author: Dyzalonius
 */
 
 _logic = _this param [0,objNull];
@@ -14,7 +14,7 @@ missionNameSpace setVariable ["respawnNextWaveTime", 1, true];
 
 // Delete module
 if (count objectcurators _logic > 0) then {
-	deletevehicle _logic;
+    deletevehicle _logic;
 };
 
 true;

@@ -1,6 +1,6 @@
 /*
-	@file_name: fn_moduleBodybagAndRespawnPlayer.sqf
-	@file_author: Dyzalonius
+    @file_name: fn_moduleBodybagAndRespawnPlayer.sqf
+    @file_author: Dyzalonius
 */
 
 _logic = _this param [0,objNull];
@@ -14,24 +14,24 @@ _pos = position _logic;
 _player = objNull;
 _object = _logic call zeusops_fnc_getUnitUnderCursor;
 if (_object in allPlayers) then {
-	_player = _object;
+    _player = _object;
 };
 
 // Bodybag and respawn if player found
 if (!(isNull _player)) then {
-	_player setDamage 1;
-	// Wait a bit for the death to register before bagging
-	sleep 0.1;
-	[objNull, _player] call ace_medical_treatment_fnc_placeInBodyBag;
-	[] remoteExec ["zeusops_fnc_respawnPlayer", _player];
-	"Bodybagged and respawned player" call zeusops_fnc_showCuratorMessage;
+    _player setDamage 1;
+    // Wait a bit for the death to register before bagging
+    sleep 0.1;
+    [objNull, _player] call ace_medical_treatment_fnc_placeInBodyBag;
+    [] remoteExec ["zeusops_fnc_respawnPlayer", _player];
+    "Bodybagged and respawned player" call zeusops_fnc_showCuratorMessage;
 } else {
-	"Module needs to be placed on player" call zeusops_fnc_showCuratorMessage;
+    "Module needs to be placed on player" call zeusops_fnc_showCuratorMessage;
 };
 
 // Delete module
 if (count objectcurators _logic > 0) then {
-	deletevehicle _logic;
+    deletevehicle _logic;
 };
 
 true;
