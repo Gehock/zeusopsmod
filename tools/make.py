@@ -58,8 +58,8 @@ if sys.platform == "win32":
     import winreg
 
 ######## GLOBALS #########
-project = "@zeusops_mod"
-project_version = "1.14.0"
+project = "@zeusops_overhaul"
+project_version = "1.0.0"
 arma3tools_path = ""
 work_drive = ""
 module_root = ""
@@ -67,11 +67,11 @@ make_root = ""
 release_dir = ""
 module_root_parent = ""
 optionals_root = ""
-key_name = "zeusops_mod"
+key_name = "zeusops_overhaul"
 key = ""
 dssignfile = ""
-prefix = "zeusops_mod"
-pbo_name_prefix = "zeusops_mod_"
+prefix = "zeusops_overhaul"
+pbo_name_prefix = "zeusops_overhaul_"
 signature_blacklist = []
 importantFiles = ["mod.cpp", "README.md", "AUTHORS.txt", "LICENSE", "logo_zeusops_mod_ca.paa"]
 versionFiles = ["README.md", "mod.cpp"]

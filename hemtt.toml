@@ -1,5 +1,5 @@
 name = "Zeusops Mod"
-prefix = "zeusops_mod"
+prefix = "zeusops_overhaul"
 author = "Zeusops"
 files = [
     "mod.cpp",

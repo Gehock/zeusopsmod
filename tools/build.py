@@ -8,7 +8,7 @@ import subprocess
 
 ######## GLOBALS #########
 MAINPREFIX = "z"
-PREFIX = "zeusops_mod_"
+PREFIX = "zeusops_overhaul_"
 ##########################
 
 def try_hemtt_build(projectpath):
@@ -54,7 +54,7 @@ def check_for_obsolete_pbos(addonspath, file):
 def main(): # pylint: disable=missing-function-docstring
     print("""
   ###################
-  # ZEUSOPS_MOD Debug Build #
+  # ZEUSOPS_OVERHAUL Debug Build #
   ###################
 """)
 
