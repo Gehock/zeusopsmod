@@ -5,6 +5,7 @@ on:
     branches:
     - master
     - feature/ace-build
+    - blank
 
 jobs:
   draft:
